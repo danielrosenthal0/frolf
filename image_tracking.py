@@ -28,6 +28,7 @@ maxLength = 0
 loc = ""
 centerX = []
 centerY = []
+area = []
 while True:
     
     # Capture the current frame
@@ -54,12 +55,13 @@ while True:
     # Find the largest contour
     if len(contours) > 0:
         c = max(contours, key=cv2.contourArea)
-
+        area.append(cv2.contourArea(c))
         # Find the center of the contour
         M = cv2.moments(c)
         if M["m00"] != 0:
             cX = int(M["m10"] / M["m00"])
             cY = int(M["m01"] / M["m00"])
+            # saving all locations of center of contours for calculations 
             centerX.append(cX)
             centerY.append(cY)
 
@@ -72,6 +74,7 @@ while True:
         print(len(contours))
         coord = c.ravel()
         i = 0
+        # getting greatest distance between every point of contour to get true diameter
         for word in coord:
             if i % 2 == 1:
                 i = i + 1
@@ -88,14 +91,10 @@ while True:
                 maxLength = max(maxLength, abs(np.linalg.norm(comp - newComp)))
                 j = j + 1
             i = i + 1
-
+    # extracting data to local coordinate system whenever contour is detected
     try:
         x = np.subtract(x, np.amin(x) - 1)
         y = np.subtract(y, np.amin(y) - 1)
-        # adj1 = np.array((x[y.argmin()], np.amin(y)))
-        # adj2 = np.array((x[y.argmax()], np.amax(y)))
-        # adj = abs(np.linalg.norm(adj1-adj2))
-        # print(adj)
         xmax = int(np.amax(x) + 1)
         ymax = int(np.amax(y) + 1)
         loc = np.zeros((xmax, ymax), dtype=np.int16)
@@ -121,17 +120,29 @@ print(maxLength)
 # immer = im.fromarray(loc, "BW")
 # immer = im.fromarray(loc.astype('uint8'))
 # immer.save("image.png")
+
+
+
+
+# logic for velocity and horizontal launch angle calculations
 inV = []
 lastVal = np.array([])
 i = 0
-coef = ((21/maxLength)*120)* 0.0000062137 * 60 * 60 
+area = np.divide(346.5,area)
+area = np.sqrt(area)
+mul = 120 * 0.0000062137 * 60 * 60
+area = np.multiply(area, mul)
+coef = ((21/maxLength)*120)* 0.0000062137 * 60 * 60
+horz = []
 for poop in centerX:
     thisVal = np.array((centerX[i], centerY[i]))
     if len(lastVal) == 2:
         inV.append(abs(np.linalg.norm(thisVal - lastVal)))
+        horz.append(np.arctan((thisVal[1] - lastVal[1])/(thisVal[0]-lastVal[0])))
     lastVal = thisVal
     i = i + 1
+horz = np.degrees(horz)
+print(horz)
 inV = np.multiply(inV, coef)
-print(inV)
-
+# print(inV)
 
