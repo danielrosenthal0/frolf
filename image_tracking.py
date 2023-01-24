@@ -29,6 +29,11 @@ upper_color = np.array([255, 255, 255])
 lower_colorb = np.array([0, 0, 0])
 upper_colorb = np.array([255, 255, 100])
 # ######################################################################################################################################
+
+#object detection parameters
+object_detector = cv2.createBackgroundSubtractorMOG2(history = 100, varThreshold= 90)
+
+
 maxLength = 0
 loc = ""
 centerX = []
@@ -114,6 +119,10 @@ while True:
     mask2  = cv2.inRange(rgb, lower_colorb, upper_colorb)
     mask2 = cv2.erode(mask2, kernel, iterations=1)
     mask2 = cv2.dilate(mask2, kernel, iterations=1)
+
+    # motion tracking
+    mask2 = object_detector.apply(mask2)
+
     contours2, h = cv2.findContours(mask2, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if len(contours2) > 0:
         c = max(contours2, key=cv2.contourArea)
