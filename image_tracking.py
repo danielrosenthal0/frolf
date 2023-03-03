@@ -4,182 +4,184 @@ import time
 import pandas as pd
 from matplotlib import pyplot as plt
 from PIL import Image as im
+
 np.set_printoptions(threshold=np.inf)
 
-# Initialize the video capture object
-cap = cv2.VideoCapture('/Users/jackconnelly/Documents/School/Fall_2022/EGR_314/OpenCV/Kendall_5_trimmed_2.MP4')
-# cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture('/Users/jackconnelly/Documents/School/Fall_2022/EGR_314/OpenCV/top_test.mp4')
 
+# # hsv orange alright?
+lower_color = np.array([0, 70, 180])
+upper_color = np.array([30, 255, 255])
 
-# Define the range of colors for the disc
-# yellow range
-# lower_color = np.array([196, 208, 25])
-# upper_color = np.array([236, 248, 45])
+# hsv blue good enough
+lower_colorBlue = np.array([100, 60, 120])
+upper_colorBlue = np.array([180, 255, 255])
 
-# orange range
-# lower_color = np.array([160, 0, 30])
-# upper_color = np.array([255, 255, 100])
+# hsv yellow ish
+lower_colorYellow = np.array([30, 70, 170])
+upper_colorYellow = np.array([70, 255, 255])
 
-# hsv?
-lower_color = np.array([0, 50, 170])
-upper_color = np.array([255, 255, 255])
-
-# ######################################################################################################################################
-# black rgb lower upper
-lower_colorb = np.array([0, 0, 0])
-upper_colorb = np.array([255, 255, 100])
-# ######################################################################################################################################
-
-#object detection parameters
-object_detector = cv2.createBackgroundSubtractorMOG2(history = 100, varThreshold= 90)
-
-
-maxLength = 0
-loc = ""
-centerX = []
-centerY = []
-area = []
+output = cv2.VideoWriter('spinRate.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 20.0, (1920,1080))
+oldAng = 0
+allAngles = []
+allV = []
+allHorz = []
+allBank = []
+i = 1
+cornerYellow = np.array((0,0))
 while True:
-    
-    # Capture the current frameq
+# Capture the current frameq
     ret, frame = cap.read()
-    frame2 = frame
     if not ret:
         break
+
+    # if i == 0:
+    #     i = 1
+    #     continue
+    # else:
+    #     i = 0
+
+    centerOrange = np.array((0,0))
+    centerBlue = np.array((0,0))
+
     # Convert the frame to the hsv color space
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-
-    # rgb color space for second mask
-    rgb = cv2.cvtColor(frame2, cv2.COLOR_BGR2HSV)
+    hsv2 = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    hsv3 = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
     # Threshold the frame to get only the colors in the specified range
     mask = cv2.inRange(hsv, lower_color, upper_color)
+    mask2 = cv2.inRange(hsv2, lower_colorBlue, upper_colorBlue)
+    mask3 = cv2.inRange(hsv3, lower_colorYellow, upper_colorYellow)
     # Use morphological transformations to reduce noise
     kernel = np.ones((5, 5), np.uint8)
     mask = cv2.erode(mask, kernel, iterations=1)
     mask = cv2.dilate(mask, kernel, iterations=1)
-    # Find the contours in the mask
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    x = np.array([])
-    y = np.array([])
-
-    # Find the largest contour
-    if len(contours) > 0:
-        c = max(contours, key=cv2.contourArea)
-        area.append(cv2.contourArea(c))
-        # Find the center of the contour
-        M = cv2.moments(c)
-        if M["m00"] != 0:
-            cX = int(M["m10"] / M["m00"])
-            cY = int(M["m01"] / M["m00"])
-            # saving all locations of center of contours for calculations 
-            centerX.append(cX)
-            centerY.append(cY)
-        else:
-            cX, cY = 0, 0
-        # Draw the contour and the center of the contour on the frame
-        cv2.drawContours(frame, [c], -1, (0, 255, 0), 2)
-        cv2.circle(frame, (cX, cY), 7, (255, 255, 255), -1)
-        cv2.putText(frame, "center", (cX - 20, cY - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-        print(len(contours))
-        coord = c.ravel()
-        i = 0
-        # getting greatest distance between every point of contour to get true diameter
-        for word in coord:
-            if i % 2 == 1:
-                i = i + 1
-                continue
-            comp = np.array((coord[i], coord[i+1]))
-            x = np.append(x,coord[i])
-            y = np.append(y,coord[i+1])
-            j = 0
-            for newword in coord:
-                if j % 2 == 1:
-                    j = j + 1
-                    continue
-                newComp = np.array((coord[j], coord[j+1]))
-                maxLength = max(maxLength, abs(np.linalg.norm(comp - newComp)))
-                j = j + 1
-            i = i + 1
-    # extracting data to local coordinate system whenever contour is detected
-    try:
-        x = np.subtract(x, np.amin(x) - 1)
-        y = np.subtract(y, np.amin(y) - 1)
-        xmax = int(np.amax(x) + 1)  
-        ymax = int(np.amax(y) + 1)
-        loc = np.zeros((xmax, ymax), dtype=np.int16)
-        i = 0
-        for num in x:
-            loc[int(x[i]),int(y[i])] = 255
-            i = i + 1
-    except:
-        print("woops")
-
-    # mask2 = frame2[100:720, 500:1250]
-    mask2  = cv2.inRange(rgb, lower_colorb, upper_colorb)
     mask2 = cv2.erode(mask2, kernel, iterations=1)
     mask2 = cv2.dilate(mask2, kernel, iterations=1)
+    mask3 = cv2.erode(mask3, kernel, iterations=1)
+    mask3 = cv2.dilate(mask3, kernel, iterations=1)
 
-    # motion tracking
-    # mask2 = object_detector.apply(mask2)
+    # Find the contours in the mask
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours2, _ = cv2.findContours(mask2, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours3, _ = cv2.findContours(mask3, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-    contours2, h = cv2.findContours(mask2, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    if len(contours2) > 0:
-        c = max(contours2, key=cv2.contourArea)
-        # Find the center of the contour
-        M = cv2.moments(c)
-        if M["m00"] != 0:
+
+    
+    for cnt in contours:
+        if len(cnt) > 200:
+            c = cnt
+            M = cv2.moments(c)
+            # if M["m00"] != 0:
             cX = int(M["m10"] / M["m00"])
             cY = int(M["m01"] / M["m00"])
-        else:
-            cX, cY = 0, 0
-        # Draw the contour and the center of the contour on the frame
-        cv2.drawContours(frame, [c], -1, (255, 0, 0), 2)
-        cv2.circle(frame, (cX, cY), 7, (255, 255, 255), -1)
-        cv2.putText(frame, "center", (cX - 20, cY - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-    
+            centerOrange = np.array((cX,cY))
+            cv2.drawContours(frame, [c], -1, (51, 87, 255), 2)
+            cv2.circle(frame, (cX, cY), 7, (51, 87, 255), -1)
+            cv2.putText(frame, "center", (cX - 20, cY - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (51, 87, 255), 2)
 
-    # Show the frame
+    for cnt in contours2:
+        if len(cnt) > 200:
+            c = cnt
+            M = cv2.moments(c)
+            # if M["m00"] != 0:
+            cX = int(M["m10"] / M["m00"])
+            cY = int(M["m01"] / M["m00"])
+            centerBlue = np.array((cX,cY))
+            cv2.drawContours(frame, [c], -1, (255, 0, 0), 2)
+            cv2.circle(frame, (cX, cY), 7, (255, 0, 0), -1)
+            cv2.putText(frame, "center", (cX - 20, cY - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+    mph = 0
+    horz = 0
+    bank = 0
+    adjTop = np.array((0,0))
+    adjBottom = np.array((100000,100000))
+    for cnt in contours3:
+        if len(cnt) > 200:
+            c = cnt
+            M = cv2.moments(c)
+            # if M["m00"] != 0:
+            cX = int(M["m10"] / M["m00"])
+            cY = int(M["m01"] / M["m00"])
+            cv2.drawContours(frame, [c], -1, (0, 255, 255), 2)
+            cv2.circle(frame, (cX, cY), 7, (0, 255, 255), -1)
+            cv2.putText(frame, "center", (cX - 20, cY - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+            longest = 0
+            for j in range(len(c)):
+                comp = np.array((c[j][0][0], c[j][0][1]))
+                longest = max(longest, np.linalg.norm(comp-np.array((cX,cY))))
+                if comp[1] > adjTop[1]:
+                    adjTop = comp
+                elif comp[1] < adjBottom[1]:
+                    adjBottom = comp
+            longest = longest * 2
+            x, y, w, h = cv2.boundingRect(c)
+            pps = np.linalg.norm(cornerYellow - np.array((x,y)))*60
+            horz = np.degrees(np.arctan((y - cornerYellow[1])/(x - cornerYellow[0])))
+            bank = np.degrees(np.arccos(np.linalg.norm(adjTop - adjBottom)/longest))
+            cmpp = 21/longest
+            cmps = pps*cmpp
+            mpcm = 1/160900
+            mph = cmps * mpcm * 60 * 60
+            cornerYellow = np.array((x,y))
+
+
+    adj = centerBlue[0] - centerOrange[0]
+    opp = centerBlue[1] - centerOrange[1]
+    ang = np.arctan(adj/opp)
+    ang = np.degrees(ang)
+
+    if centerOrange[1] == 0 or centerBlue[1] == 0:
+        rps = 0
+    elif centerOrange[0] > 1900 or centerBlue[0] > 1900:
+        rps = 0
+    elif centerOrange[0] < 150 or centerBlue[0] < 150:
+        rps = 0
+    elif ang < 0 and oldAng > 0:
+        change = (ang + 180) - oldAng
+        rps = abs((change)*60/360)
+        cv2.line(frame, centerOrange, centerBlue, (255, 255, 255), thickness=3, lineType=8)
+        cv2.putText(frame, '{:.2f}'.format(ang), (centerOrange[0] - 20, centerOrange[1] - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+    else:
+        change = ang - oldAng
+        rps = abs((change)*60/360)
+        cv2.line(frame, centerOrange, centerBlue, (255, 255, 255), thickness=3, lineType=8)
+        cv2.putText(frame, '{:.2f}'.format(ang), (centerOrange[0] - 20, centerOrange[1] - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+    # print(oldAng)
+    # print(ang)
+    # print(rps)
+    print("")
+    oldAng = ang
+    if rps > 0:
+        allAngles.append(rps)  
+    
+    # if mph > 0:
+    allV.append(mph)
+    # if abs(horz) != 0:
+    allHorz.append(horz)
+    # if bank > 0:
+    allBank.append(bank)
+    cv2.putText(frame, 'Spin Rate: {:.2f} R/S'.format(rps), (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 2)
+    cv2.putText(frame, 'Velocity: {:.2f} MPH'.format(mph), (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 2)
+    cv2.putText(frame, 'Horizontal Launch Angle: {:.2f} Degrees'.format(horz), (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 2)
+    cv2.putText(frame, 'Bank: {:.2f} Degrees'.format(bank), (10, 240), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 2)
     cv2.imshow("Frame", frame)
-    cv2.imshow("mask", mask)
-    cv2.imshow("mask2", mask2)
-    # time.sleep(.3)
-    # Exit the loop if the 'q' key is pressed
+    output.write(frame)
+    time.sleep(1)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-    
+
+print(np.average(allAngles)) 
+print(np.average(allV)) 
+print(np.average(allHorz)) 
+print(np.average(allBank)) 
+
+# print(allV)
+# print(np.average(allAngles[~np.isnan(allAngles)])) 
+
+
 # Release the video capture object and close all windows
+output.release()
 cap.release()
 cv2.destroyAllWindows()
-
-print(maxLength)
-
-# immer = im.fromarray(loc, "BW")
-# immer = im.fromarray(loc.astype('uint8'))
-# immer.save("image.png")
-
-
-
-
-# logic for velocity and horizontal launch angle calculations
-inV = []
-lastVal = np.array([])
-i = 0
-area = np.divide(346.5,area)
-area = np.sqrt(area)
-mul = 120 * 0.0000062137 * 60 * 60
-area = np.multiply(area, mul)
-coef = ((21/maxLength)*120)* 0.0000062137 * 60 * 60
-horz = []
-for poop in centerX:
-    thisVal = np.array((centerX[i], centerY[i]))
-    if len(lastVal) == 2:
-        inV.append(abs(np.linalg.norm(thisVal - lastVal)))
-        horz.append(np.arctan((thisVal[1]-lastVal[1])/(thisVal[0]-lastVal[0])))
-    lastVal = thisVal
-    i = i + 1
-horz = np.degrees(horz)
-print(horz)
-inV = np.multiply(inV, coef)
-# print(inV)
-
