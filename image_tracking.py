@@ -115,13 +115,13 @@ while True:
     except:
         print("woops")
 
-
+    # mask2 = frame2[100:720, 500:1250]
     mask2  = cv2.inRange(rgb, lower_colorb, upper_colorb)
     mask2 = cv2.erode(mask2, kernel, iterations=1)
     mask2 = cv2.dilate(mask2, kernel, iterations=1)
 
     # motion tracking
-    mask2 = object_detector.apply(mask2)
+    # mask2 = object_detector.apply(mask2)
 
     contours2, h = cv2.findContours(mask2, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if len(contours2) > 0:
