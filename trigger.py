@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from imutils.video import FPS
 
 np.set_printoptions(threshold=np.inf)
-gstreamer_str = "nvarguscamerasrc sensor-id=1 exposuretimerange=\"1500000 1500000\" ! video/x-raw(memory:NVMM), width=1920, height=1080, format=(string)NV12, framerate=60/1 ! nvvidconv flip-method=0 ! video/x-raw, width=720, height=480, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink"
+gstreamer_str = "nvarguscamerasrc sensor-id=1 exposuretimerange=\"2000000 2000000\" ! video/x-raw(memory:NVMM), width=1920, height=1080, format=(string)NV12, framerate=60/1 ! nvvidconv flip-method=0 ! video/x-raw, width=720, height=480, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink"
 gstreamer_str2 = "nvarguscamerasrc sensor-id=0 ! video/x-raw(memory:NVMM), width=1920, height=1080, format=(string)NV12, framerate=60/1 ! nvvidconv flip-method=0 ! video/x-raw, width=720, height=480, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink"
 
 cap = cv2.VideoCapture(gstreamer_str, cv2.CAP_GSTREAMER)
@@ -41,6 +41,10 @@ start = time.time()
 i = 1
 cornerYellow = np.array((0,0))
 fps = FPS().start()
+
+#min area for contours
+minArea = 10000
+
 while True:
 # Capture the current frameq
     ret, frame = cap.read()
@@ -89,21 +93,22 @@ while True:
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     contours2, _ = cv2.findContours(mask2, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     contours3, _ = cv2.findContours(mask5, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    
     doCon = False
     
 
     for cnt in contours3:
         area = cv2.contourArea(cnt)
-        if area > 5000:
+        if area > minArea:
             doCon = True
             break
         
     if doCon is False:
         if np.any(allV):
-            lastV = max(allV)
+            lastV = np.average(allV)
             allV = []
         cv2.putText(frame, 'Velocity: {:.2f} MPH'.format(lastV), (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 2)
-        cv2.imshow("VScreen", frame)
+        cv2.imshow("Average velocity", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
         continue
@@ -111,7 +116,7 @@ while True:
 
     for cnt in contours:
         area = cv2.contourArea(cnt)
-        if area > 10000:
+        if area > minArea:
             c = cnt
             M = cv2.moments(c)
             # if M["m00"] != 0:
@@ -124,7 +129,7 @@ while True:
 
     for cnt in contours2:
         area = cv2.contourArea(cnt)
-        if area > 10000:
+        if area > minArea:
             c = cnt
             M = cv2.moments(c)
             # if M["m00"] != 0:
@@ -141,7 +146,7 @@ while True:
     adjBottom = np.array((100000,100000))
     for cnt in contours3:
         area = cv2.contourArea(cnt)
-        if area > 5000:
+        if area > minArea:
             c = cnt
             M = cv2.moments(c)
             # if M["m00"] != 0:
@@ -173,7 +178,7 @@ while True:
     
     cv2.putText(frame, 'Velocity: {:.2f} MPH'.format(mph), (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 2)
     cv2.imshow("Frame2", frame2)
-    cv2.imshow("Frame", frame)
+    cv2.imshow("Instantaneous velocity", frame)
     
     # cv2.imshow("test",mask5)
     if cv2.waitKey(1) & 0xFF == ord('q'):
