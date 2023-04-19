@@ -90,14 +90,14 @@ while True:
 
 
     # Find the contours in the mask
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    contours2, _ = cv2.findContours(mask2, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    contours3, _ = cv2.findContours(mask5, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    blue_contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    orange_contours, _ = cv2.findContours(mask2, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    all_contours, _ = cv2.findContours(mask5, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     
     doCon = False
     
 
-    for cnt in contours3:
+    for cnt in all_contours:
         area = cv2.contourArea(cnt)
         if area > minArea:
             doCon = True
@@ -114,9 +114,9 @@ while True:
         continue
 
 
-    for cnt in contours:
+    for cnt in blue_contours:
         area = cv2.contourArea(cnt)
-        if area > minArea:
+        if area > 5000:
             c = cnt
             M = cv2.moments(c)
             # if M["m00"] != 0:
@@ -127,9 +127,9 @@ while True:
             cv2.circle(frame, (cX, cY), 7, (51, 87, 255), -1)
             cv2.putText(frame, "center", (cX - 20, cY - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (51, 87, 255), 2)
 
-    for cnt in contours2:
+    for cnt in orange_contours:
         area = cv2.contourArea(cnt)
-        if area > minArea:
+        if area > 5000:
             c = cnt
             M = cv2.moments(c)
             # if M["m00"] != 0:
@@ -144,7 +144,7 @@ while True:
     bank = 0
     adjTop = np.array((0,0))
     adjBottom = np.array((100000,100000))
-    for cnt in contours3:
+    for cnt in all_contours:
         area = cv2.contourArea(cnt)
         if area > minArea:
             c = cnt
@@ -175,6 +175,7 @@ while True:
     
     # if mph > 0:
     allV.append(mph)
+    print(mph)
     
     cv2.putText(frame, 'Velocity: {:.2f} MPH'.format(mph), (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 2)
     cv2.imshow("Frame2", frame2)
