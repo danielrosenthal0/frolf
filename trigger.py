@@ -185,7 +185,7 @@ while True:
             cv2.drawContours(frame, [c], -1, (0, 255, 255), 2)
             cv2.circle(frame, (cX, cY), 7, (0, 255, 255), -1)
             cv2.putText(frame, "center", (cX - 20, cY - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
-            longest = 125
+            longest = 112
             # for j in range(len(c)):
             #     comp = np.array((c[j][0][0], c[j][0][1]))
             #     longest = max(longest, np.linalg.norm(comp-np.array((cX,cY))))
@@ -200,7 +200,7 @@ while True:
             cmps = pps*cmpp
             mpcm = 1/160900
             mph = cmps * mpcm * 60 * 60
-            cornerYellow = np.array((x,y))
+            cornerYellow = np.array((cX,cY))
 
     for cnt in all_contours_side:
         area = cv2.contourArea(cnt)
