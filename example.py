@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 
 from frispy.disc import Disc
 
-disc = Disc(vx=10, theta=-0.2)
+disc = Disc(10, -0.2)
 result = disc.compute_trajectory()
 times = result.times
 x, y, z = result.x, result.y, result.z
