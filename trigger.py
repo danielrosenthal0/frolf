@@ -29,7 +29,7 @@ lower_colorGreen = np.array([60, 60, 70])
 upper_colorGreen = np.array([110, 255, 255])
 
 # # hsv orange alright?
-lower_colorSide = np.array([0, 150, 120])
+lower_colorSide = np.array([0, 150, 180])
 upper_colorSide = np.array([30, 255, 255])
 
 # output = cv2.VideoWriter('spinRate.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 20.0, (1920,1080))
@@ -51,14 +51,14 @@ fps = FPS().start()
 #min area for contours
 minArea = 500
 
-minSideArea = 100
+minSideArea = 50
 maxSideArea = 4000
 
 while True:
 # Capture the current frameq
     ret, frame = cap.read()
     ret2, frameSide = cap2.read()
-    frame2 = frameSide[150:420, 200:650]
+    frame2 = frameSide[150:420, 0:650]
     if not ret:
         break
     difference = time.time() - start
@@ -133,7 +133,7 @@ while True:
             break
     if doCon is False:
         if np.any(allV):
-            lastNose = np.median(allNose)
+            lastNose = np.average(allNose)
             allNose = []
             lastV = allV[-1]
             allV = []
@@ -174,6 +174,7 @@ while True:
     mph = 0
     horz = 0
     bank = 0
+    nose = 0
     adjTop = np.array((0,0))
     adjBottom = np.array((100000,100000))
     for cnt in all_contours:
@@ -226,13 +227,16 @@ while True:
             [vx,vy,x,y] = cv2.fitLine(c, cv2.DIST_L2, 0,0.01,0.01)
             left = int((-x*vy/vx)+y)
             right = int(((x)*vy/vx)+y)
-            cv2.line(frame2,((cols-1),int(right)),(0,int(left)),(0,255,0),2)
+            # cv2.line(frame2,((cols-1),int(right)),(0,int(left)),(0,255,0),2)
             try:
                 nose = -np.degrees(np.arctan((left-right)/(cols-1)))
             except:
                 nose = 0
+            x, y, h, w = cv2.boundingRect(c)
+            # nose = np.degrees(np.arctan(h/w))
             cv2.putText(frame2, 'Nose Angle: {:.2f} Degrees'.format(nose), (20, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
             allNose.append(nose)
+            print(nose)
             # for j in range(len(c)):
             #     comp = np.array((c[j][0][0], c[j][0][1]))
             #     longest = max(longest, np.linalg.norm(comp-np.array((cX,cY))))
