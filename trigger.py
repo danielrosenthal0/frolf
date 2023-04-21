@@ -236,7 +236,7 @@ while True:
             # nose = np.degrees(np.arctan(h/w))
             cv2.putText(frame2, 'Nose Angle: {:.2f} Degrees'.format(nose), (20, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
             allNose.append(nose)
-            print(nose)
+            # print(nose)
             # for j in range(len(c)):
             #     comp = np.array((c[j][0][0], c[j][0][1]))
             #     longest = max(longest, np.linalg.norm(comp-np.array((cX,cY))))
@@ -270,7 +270,7 @@ while True:
 
 # print(np.average(allV)) 
 fps.stop()
-print(fps.fps())
+# print(fps.fps())
 
 # print(allV)
 # print(np.average(allAngles[~np.isnan(allAngles)])) 
