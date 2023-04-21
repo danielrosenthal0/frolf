@@ -97,8 +97,17 @@ while True:
             cv2.putText(frame2, "center", (cX - 20, cY - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
             x, y, w, h = cv2.boundingRect(c)
             nose = np.degrees(np.arctan(h/w))
+            # (x,y), radius = cv2.minEnclosingCircle(c)
+            rows,cols = frame2.shape[:2]
+            [vx,vy,x,y] = cv2.fitLine(c, cv2.DIST_L2, 0,0.01,0.01)
+            left = int((-x*vy/vx)+y)
+            right = int(((x)*vy/vx)+y)
+            cv2.line(frame2,((cols-1),int(left)),(0,int(right)),(0,255,0),2)
+            try:
+                nose = -np.degrees(np.arctan((left-right)/(cols-1)))
+            except:
+                nose = 0
             cv2.putText(frame2, 'Nose Angle: {:.2f} Degrees'.format(nose), (20, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-
 
     cv2.imshow("maskside",maskSide)
     cv2.imshow("Frame2", frame2)

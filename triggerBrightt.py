@@ -29,7 +29,7 @@ lower_colorGreen = np.array([60, 60, 70])
 upper_colorGreen = np.array([110, 255, 255])
 
 # # hsv orange alright?
-lower_colorSide = np.array([0, 150, 120])
+lower_colorSide = np.array([0, 50, 100])
 upper_colorSide = np.array([30, 255, 255])
 
 # output = cv2.VideoWriter('spinRate.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 20.0, (1920,1080))
@@ -226,7 +226,7 @@ while True:
             [vx,vy,x,y] = cv2.fitLine(c, cv2.DIST_L2, 0,0.01,0.01)
             left = int((-x*vy/vx)+y)
             right = int(((x)*vy/vx)+y)
-            cv2.line(frame2,((cols-1),int(right)),(0,int(left)),(0,255,0),2)
+            # cv2.line(frame2,((cols-1),int(right)),(0,int(left)),(0,255,0),2)
             try:
                 nose = -np.degrees(np.arctan((left-right)/(cols-1)))
             except:
